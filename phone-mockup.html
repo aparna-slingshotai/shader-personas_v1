@@ -2036,12 +2036,14 @@
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 let recognition = null;
                 let isListening = false;
+                let shouldAutoListen = false;
+                let activeScreenId = 'chat';
 
                 if (SpeechRecognition) {
                     recognition = new SpeechRecognition();
                     recognition.lang = 'en-US';
                     recognition.interimResults = true;
-                    recognition.continuous = false;
+                    recognition.continuous = true;
                 }
 
                 const setVoiceStatus = (text) => {
@@ -2070,6 +2072,7 @@
                 const startListening = () => {
                     if (!recognition || isListening) return;
                     try {
+                        shouldAutoListen = true;
                         isListening = true;
                         setVoiceStatus('LISTENING...');
                         setVoiceGlow(false);
@@ -2083,11 +2086,13 @@
 
                 const stopListening = () => {
                     if (!recognition || !isListening) return;
+                    shouldAutoListen = false;
                     recognition.stop();
                     setVoiceGlow(false);
                 };
 
                 const showScreen = (screenId) => {
+                    activeScreenId = screenId;
                     document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
                     const target = document.getElementById('screen-' + screenId);
                     if (target) {
@@ -2140,6 +2145,11 @@
                         isListening = false;
                         setVoiceStatus('ASH IS LISTENING');
                         setVoiceGlow(false);
+                        if (shouldAutoListen && activeScreenId === 'voice') {
+                            setTimeout(() => {
+                                startListening();
+                            }, 250);
+                        }
                     });
 
                     recognition.addEventListener('error', () => {
