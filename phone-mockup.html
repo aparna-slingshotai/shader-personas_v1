@@ -1684,14 +1684,6 @@
                     updateIconGradient(harmonyKey);
                 };
 
-                const showScreen = (screenId) => {
-                    document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
-                    const target = document.getElementById('screen-' + screenId);
-                    if (target) {
-                        target.classList.add('active');
-                    }
-                };
-
                 const setHarmony = (harmony, options = {}) => {
                     if (!this.harmonies[harmony]) return;
                     this.params.harmony = harmony;
@@ -2058,25 +2050,53 @@
                     }
                 };
 
+                const setVoiceGlow = (isActive) => {
+                    if (!voiceHeaderIcon) return;
+                    voiceHeaderIcon.classList.toggle('is-lit', isActive);
+                };
+
                 const startListening = () => {
                     if (!recognition || isListening) return;
                     try {
                         isListening = true;
                         setVoiceStatus('LISTENING...');
-                        triggerHeaderGlow(voiceHeaderIcon);
+                        setVoiceGlow(false);
                         recognition.start();
                     } catch (error) {
                         isListening = false;
                         setVoiceStatus('VOICE UNAVAILABLE');
+                        setVoiceGlow(false);
                     }
                 };
 
                 const stopListening = () => {
                     if (!recognition || !isListening) return;
                     recognition.stop();
+                    setVoiceGlow(false);
+                };
+
+                const showScreen = (screenId) => {
+                    document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+                    const target = document.getElementById('screen-' + screenId);
+                    if (target) {
+                        target.classList.add('active');
+                    }
+                    if (screenId === 'voice') {
+                        startListening();
+                    } else {
+                        stopListening();
+                    }
                 };
 
                 if (recognition) {
+                    recognition.addEventListener('speechstart', () => {
+                        setVoiceGlow(true);
+                    });
+
+                    recognition.addEventListener('speechend', () => {
+                        setVoiceGlow(false);
+                    });
+
                     recognition.addEventListener('result', (event) => {
                         const transcript = Array.from(event.results)
                             .map(result => result[0]?.transcript || '')
@@ -2090,11 +2110,13 @@
                     recognition.addEventListener('end', () => {
                         isListening = false;
                         setVoiceStatus('ASH IS LISTENING');
+                        setVoiceGlow(false);
                     });
 
                     recognition.addEventListener('error', () => {
                         isListening = false;
                         setVoiceStatus('VOICE UNAVAILABLE');
+                        setVoiceGlow(false);
                     });
                 } else {
                     setVoiceStatus('VOICE UNAVAILABLE');
