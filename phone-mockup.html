@@ -2055,6 +2055,18 @@
                     voiceHeaderIcon.classList.toggle('is-lit', isActive);
                 };
 
+                let speechGlowTimer = null;
+
+                const pulseVoiceGlow = (duration = 600) => {
+                    setVoiceGlow(true);
+                    if (speechGlowTimer) {
+                        clearTimeout(speechGlowTimer);
+                    }
+                    speechGlowTimer = setTimeout(() => {
+                        setVoiceGlow(false);
+                    }, duration);
+                };
+
                 const startListening = () => {
                     if (!recognition || isListening) return;
                     try {
@@ -2089,6 +2101,22 @@
                 };
 
                 if (recognition) {
+                    recognition.addEventListener('audiostart', () => {
+                        setVoiceGlow(true);
+                    });
+
+                    recognition.addEventListener('audioend', () => {
+                        setVoiceGlow(false);
+                    });
+
+                    recognition.addEventListener('soundstart', () => {
+                        setVoiceGlow(true);
+                    });
+
+                    recognition.addEventListener('soundend', () => {
+                        setVoiceGlow(false);
+                    });
+
                     recognition.addEventListener('speechstart', () => {
                         setVoiceGlow(true);
                     });
@@ -2103,6 +2131,7 @@
                             .join(' ')
                             .trim();
                         if (transcript) {
+                            pulseVoiceGlow();
                             handlePersonaTrigger(transcript);
                         }
                     });
