@@ -151,6 +151,12 @@
             transform-origin: center center;
         }
 
+        .controls-stack {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-04);
+        }
+
         /* iPhone Frame */
         .phone-frame {
             position: relative;
@@ -814,6 +820,34 @@
             border: 1px solid var(--surface-dark-3);
         }
 
+        .instructions-panel {
+            width: 380px;
+            background: #ffffff;
+            border: none;
+            border-radius: var(--radius-03);
+            padding: var(--spacing-04);
+            color: #855074;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: var(--spacing-05);
+            box-shadow: 0 12px 30px rgba(26, 24, 22, 0.18);
+        }
+
+        .instructions-panel h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: inherit;
+            margin-bottom: var(--spacing-02);
+        }
+
+        .instructions-panel ul {
+            list-style: none;
+            padding-left: 0;
+            margin: var(--spacing-02) 0 0;
+            display: grid;
+            gap: 6px;
+        }
+
         .panel-title {
             font-family: 'Libre Baskerville', serif;
             font-size: 20px;
@@ -1399,9 +1433,22 @@
             </div>
         </div>
 
-        <!-- Controls Panel -->
-        <div class="controls-panel">
-            <h2 class="panel-title">Shader Controls</h2>
+        <div class="controls-stack">
+            <div class="instructions-panel">
+                <h3>Instructions</h3>
+                <div>Type any of the following commands into the text input field to watch the shaders in effect.</div>
+                <ul>
+                    <li>nice = Ashley Chen Torres</li>
+                    <li>optimistic = coach</li>
+                    <li>bubbly = bestie</li>
+                    <li>optimistic = spiritual</li>
+                    <li>straight forward = psychodynamic</li>
+                </ul>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <h2 class="panel-title">Shader Controls</h2>
 
             <div class="control-group">
                 <label class="control-label">Personas</label>
@@ -1471,6 +1518,7 @@
                     <input type="range" class="slider" id="opacitySlider" min="0" max="100" value="100">
                     <span class="slider-value" id="opacityValue">100%</span>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -2159,6 +2207,12 @@
                         } else {
                             startListening();
                         }
+                    });
+                    voiceMicBtn.addEventListener('mouseenter', () => {
+                        setVoiceGlow(true);
+                    });
+                    voiceMicBtn.addEventListener('mouseleave', () => {
+                        setVoiceGlow(false);
                     });
                 }
 
