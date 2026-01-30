@@ -1954,7 +1954,7 @@
 
                 const handlePersonaTrigger = (text) => {
                     const normalized = text.toLowerCase().trim();
-                    if (normalized === 'i want you to be nicer to me') {
+                    if (normalized === 'i want you to be nicer to me' || normalized === 'be nice to me' || normalized === 'you could be nicer to me') {
                         setPersonaMode('post');
                         setHarmony('sundial');
                         addAutoResponse('Ashley Chen Torres', 'sundial', 'star');
@@ -1970,6 +1970,8 @@
                     }
 
                     const keywordMap = [
+                        { phrase: 'be nice to me', harmony: 'sundial', label: 'Ashley Chen Torres' },
+                        { phrase: 'you could be nicer to me', harmony: 'sundial', label: 'Ashley Chen Torres' },
                         { phrase: 'bubbly', harmony: 'sundial', label: 'Ashley Chen Torres' },
                         { phrase: 'motivate', harmony: 'seafoam', label: 'Coach' },
                         { phrase: 'straight forward', harmony: 'parchment', label: 'Psychodynamic' },
@@ -2057,29 +2059,22 @@
                     voiceHeaderIcon.classList.toggle('is-lit', isActive);
                 };
 
-                let speechGlowTimer = null;
-
-                const pulseVoiceGlow = (duration = 600) => {
-                    setVoiceGlow(true);
-                    if (speechGlowTimer) {
-                        clearTimeout(speechGlowTimer);
-                    }
-                    speechGlowTimer = setTimeout(() => {
-                        setVoiceGlow(false);
-                    }, duration);
-                };
+                const voiceStatusOnText = 'ASH IS LISTENING';
+                const voiceStatusOffText = 'TALK TO ASH';
+                let lastSpeechCommandAt = 0;
+                let lastSpeechCommandText = '';
 
                 const startListening = () => {
                     if (!recognition || isListening) return;
                     try {
                         shouldAutoListen = true;
                         isListening = true;
-                        setVoiceStatus('LISTENING...');
+                        setVoiceStatus(voiceStatusOnText);
                         setVoiceGlow(false);
                         recognition.start();
                     } catch (error) {
                         isListening = false;
-                        setVoiceStatus('VOICE UNAVAILABLE');
+                        setVoiceStatus(voiceStatusOffText);
                         setVoiceGlow(false);
                     }
                 };
@@ -2089,6 +2084,7 @@
                     shouldAutoListen = false;
                     recognition.stop();
                     setVoiceGlow(false);
+                    setVoiceStatus(voiceStatusOffText);
                 };
 
                 const showScreen = (screenId) => {
@@ -2106,22 +2102,6 @@
                 };
 
                 if (recognition) {
-                    recognition.addEventListener('audiostart', () => {
-                        setVoiceGlow(true);
-                    });
-
-                    recognition.addEventListener('audioend', () => {
-                        setVoiceGlow(false);
-                    });
-
-                    recognition.addEventListener('soundstart', () => {
-                        setVoiceGlow(true);
-                    });
-
-                    recognition.addEventListener('soundend', () => {
-                        setVoiceGlow(false);
-                    });
-
                     recognition.addEventListener('speechstart', () => {
                         setVoiceGlow(true);
                     });
@@ -2131,19 +2111,35 @@
                     });
 
                     recognition.addEventListener('result', (event) => {
-                        const transcript = Array.from(event.results)
+                        const results = Array.from(event.results);
+                        const transcript = results
                             .map(result => result[0]?.transcript || '')
                             .join(' ')
                             .trim();
-                        if (transcript) {
-                            pulseVoiceGlow();
+                        if (!transcript) return;
+
+                        const latest = results[results.length - 1];
+                        const latestText = (latest && latest[0]?.transcript ? latest[0].transcript : '').trim();
+                        const lowerTranscript = transcript.toLowerCase();
+                        const lowerLatest = latestText.toLowerCase();
+                        const now = Date.now();
+                        const hasNice = /\bnice\b/i.test(lowerTranscript) || /\bnice\b/i.test(lowerLatest);
+
+                        if (hasNice && (now - lastSpeechCommandAt > 1500 || lastSpeechCommandText !== 'nice')) {
+                            lastSpeechCommandAt = now;
+                            lastSpeechCommandText = 'nice';
+                            handlePersonaTrigger('nice');
+                            return;
+                        }
+
+                        if (latest?.isFinal) {
                             handlePersonaTrigger(transcript);
                         }
                     });
 
                     recognition.addEventListener('end', () => {
                         isListening = false;
-                        setVoiceStatus('ASH IS LISTENING');
+                        setVoiceStatus(voiceStatusOnText);
                         setVoiceGlow(false);
                         if (shouldAutoListen && activeScreenId === 'voice') {
                             setTimeout(() => {
@@ -2154,11 +2150,11 @@
 
                     recognition.addEventListener('error', () => {
                         isListening = false;
-                        setVoiceStatus('VOICE UNAVAILABLE');
+                        setVoiceStatus(voiceStatusOffText);
                         setVoiceGlow(false);
                     });
                 } else {
-                    setVoiceStatus('VOICE UNAVAILABLE');
+                    setVoiceStatus(voiceStatusOffText);
                 }
 
                 if (voiceMicBtn) {
